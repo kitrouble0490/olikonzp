@@ -1,0 +1,277 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./css/app.css">
+    <title>OLIKON-ZP</title>
+</head>
+
+<body>
+    <div id="app">
+        <header>
+            <div class="w25">OLIKON-ЗП</div>
+            <div class="w25">
+                <label for="uploadDB">Загрузить Базу</label>
+                <input id="uploadDB" type="file" @change="loadDB" name="Загрузить">
+            </div>
+            <div class="control">
+                <div>
+                    <button class="btn mh5" @click="viewAddPage = true">+ Cтраницу</button>
+                    <button class="btn mh5" @click="viewAddDepartment = true">+ Oтдел</button>
+                    <button v-if="db.departments.length > 0" class="btn mh5" @click="viewAddEmployer = true">+
+                        Cотрудника</button>
+                </div>
+            </div>
+        </header>
+        <div class="container">
+            <div v-if="alert.show" class="alert" :class="alert.type">
+                {{ alert.message }}
+                <a @click="alert.show = false" class="close-alert" href="#"></a>
+            </div>
+            <div class="menu-btn">
+                <div style="display: flex;">
+                    <button v-show="db.pages && db.pages.length > 0" class="btn mh5" @click="createPeriod"
+                        title="Создать расчeтный период">
+                        <img class="icon" src="./css/icons/period-white.png">
+                    </button>
+                    <button class="btn mh5" @click="viewEmployeesList = true" title="Список сотрудников">
+                        <img class="icon" src="./css/icons/people-white.png" alt="Сотрудники">
+                    </button>
+                    <button class="btn mh5" @click="viewDepartmentList = true" title="Список отделов">
+                        <img class="icon" src="./css/icons/department-white.png" alt="Отделы">
+                    </button>
+                </div>
+                <div v-if="selectPage">
+                    <h4>Страница: {{selectPage.title}}</h4>
+                </div>
+                <div>
+                    <button class="btn success" @click="saveDB">Сохранить БД</button>
+                </div>
+            </div>
+            <div class="content">
+                <h3 v-if="!selectPage" align="center"><em>Не выбрана страница для работы!</em></h3>
+                <div v-if="selectPage.groups && selectPage.groups.length > 0">
+                    <div v-for="group, i in selectPage.groups" class="group-block">
+                        <div class="group-name">{{ group.name }} </div>
+                        <div class="group-table" v-if="group.departments.length > 0"
+                            v-for="dep, index in group.departments">
+                            <div class="group-table-head">
+                                <div v-if="index === 0 ">Дни периода</div>
+                                <h4>
+                                    {{ dep.name }}
+                                    <a href="#" @click="deleteDepartmentFromGroup(group, dep.id)" class="icon-delete"
+                                        title="Удалить отдел из Р/П"></a>
+                                </h4>
+                                <div>План <em style="font-size: 12px;"> (= <input type="text" class="text-field__simple"
+                                            @change="calcPlanDays(dep)" v-model="dep.plan_summ" />р.)</em>
+                                </div>
+                                <div>Факт <em style="font-size: 12px;"> (= {{ dep.fact_summ }}р.)</em> </div>
+                                <div>
+                                    <span class="text-warning" v-if="dep.fact_summ - dep.plan_summ < 0">
+                                        Не выполнение({{dep.fact_summ - dep.plan_summ}} р.)
+                                    </span>
+                                    <span class="text-success" v-if="dep.fact_summ - dep.plan_summ > 0">
+                                        Выполнение({{dep.fact_summ - dep.plan_summ}} р.)
+                                    </span>
+                                </div>
+                                <div>Бонус = (<em class="text-warning">&#9660;{{ dep.min_percent }}%</em> - <em class="text-success">&#9650;{{ dep.max_percent }}%</em>)</div>
+                                <div v-if="dep.employees.length > 0" v-for="emp in dep.employees" class="emploeye">{{
+                                    emp.surname }} {{ emp.name }} <em style="font-size: 12px;">(= {{ emp.zp ? emp.zp :
+                                        ''}} р.)</em></div>
+                            </div>
+                            <div class="group-table-row" v-for="item in dep.items">
+                                <div v-if="index === 0 ">{{ item.number }}<sup>{{group.name}}</sup></div>
+                                <h4></h4>
+                                <div>
+                                    {{ item.plan }}<em>р.</em>
+                                </div>
+                                <div>
+                                    <input type="text" v-model.number="item.fact" class="text-input"
+                                        @change="calcZP(item, false, dep)"> <em>р.</em>
+                                </div>
+                                <div>
+                                    <span v-if="item.fact - item.plan < 0"
+                                        class="text-warning">{{differenceSumm(item.fact,item.plan) }}<em>р.</em></span>
+                                    <span v-if="item.fact - item.plan > 0"
+                                        class="text-success">{{differenceSumm(item.fact,item.plan) }}<em>р.</em></span>
+                                </div>
+                                <div>
+                                    <input type="text" v-model.number="item.percent" class="text-input-sm"
+                                        @change="calcZP(item, true, dep)">%
+                                </div>
+                                <div v-if="dep.employees.length > 0" v-for="emp in dep.employees">
+                                    <input type="checkbox" :checked="checkEmploeyeInItem(emp.id, item)"
+                                        @change="changeItemEmploeye(emp.id, item, dep)">
+                                    <span v-if="item.employees.includes(emp.id)">{{item.zp}}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="m10">
+                            <button class="btn" @click="selectDepartmentForGroup(group)">+ Отдел</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <footer>
+            <div v-if="db.pages && db.pages.length > 0">
+                <button class="btn mh5" v-for="page in db.pages" @click="funcSelectPage(page.id)">{{ page.title
+                    }}</button>
+            </div>
+        </footer>
+        <div v-if="viewAddPage" class="modal-add">
+            <div class="modal-content">
+                <div class="modal-head">
+                    <span>Добавление новой страницы</span>
+                    <a @click="viewAddPage = false" class="close-icon" href="#"></a>
+                </div>
+                <div class="modal-body">
+                    <form class="text-field">
+                        <label for="pageName" class="text-field__label">Введите название</label>
+                        <input id="pageName" class="text-field__input" v-model="formPage.title"
+                            placeholder="Например: 2023" />
+                    </form>
+                    <button class="btn" @click="addNewPage">Добавить</button>
+                </div>
+            </div>
+        </div>
+        <div v-if="viewAddGroup" class="modal-add">
+            <div class="modal-content">
+                <div class="modal-head">
+                    <span>Добавление расчетного периода</span>
+                    <a @click="viewAddGroup = false" class="close-icon" href="#"></a>
+                </div>
+                <div class="modal-body">
+                    <form class="text-field">
+                        <label for="groupName" class="text-field__label">Выберите месяц</label>
+                        <select class="text-field__input" style="margin-bottom: 20px;" @change="checkGroup"
+                            v-model="selectGroup.number">
+                            <option v-for="group in groups" :value="group.number">{{ group.name }}</option>
+                        </select>
+                        <label for="groupDays" class="text-field__label">Кол-во дней в месяце</label>
+                        <input id="groupDays" class="text-field__input" type="text" v-model="selectGroup.days">
+                    </form>
+                    <button v-if="!blockAddGroup" class="btn" @click="addNewGroup">Добавить</button>
+                </div>
+            </div>
+        </div>
+        <div v-if="viewAddEmployer" class="modal-add">
+            <div class="modal-content">
+                <div class="modal-head">
+                    <span>Добавление сотрудника</span>
+                    <a @click="viewAddEmployer = false" class="close-icon" href="#"></a>
+                </div>
+                <div class="modal-body">
+                    <form class="text-field">
+                        <div class="modal-group">
+                            <label for="firstname" class="text-field__label">Имя</label>
+                            <input id="firstname" class="text-field__input" v-model="formEmploeyee.name"
+                                placeholder="Иван" />
+                        </div>
+                        <div class="modal-group">
+                            <label for="surname" class="text-field__label">Фамилия</label>
+                            <input id="surname" class="text-field__input" v-model="formEmploeyee.surname"
+                                placeholder="Иванов" />
+                        </div>
+                        <div class="modal-group" v-if="db.departments && db.departments.length > 0">
+                            <label for="department" class="text-field__label">Отдел</label>
+                            <select id="department" class="text-field__input" v-model="formEmploeyee.did">
+                                <option v-for="department in db.departments" :value="department.id">{{ department.name
+                                    }}</option>
+                            </select>
+                        </div>
+                    </form>
+                    <button class="btn" @click="addNewEmployee">Добавить</button>
+                </div>
+            </div>
+        </div>
+        <div v-if="viewAddDepartment" class="modal-add">
+            <div class="modal-content">
+                <div class="modal-head">
+                    <span>Добавление отдела</span>
+                    <a @click="viewAddDepartment = false" class="close-icon" href="#"></a>
+                </div>
+                <div class="modal-body">
+                    <form class="text-field">
+                        <label for="department_name" class="text-field__label">Введите название</label>
+                        <input id="department_name" class="text-field__input" v-model="formDepartment.name"
+                            placeholder="Отдел продаж" />
+                    </form>
+                    <form class="text-field">
+                        <label for="department_min" class="text-field__label">Минимальный % бонуса</label>
+                        <input id="department_min" type="number" class="text-field__input"
+                            v-model="formDepartment.min_percent" @input="serializePercent(formDepartment)"
+                            placeholder="1.2" />
+                    </form>
+                    <form class="text-field">
+                        <label for="department_max" class="text-field__label">Максимальный % бонуса</label>
+                        <input id="department_max" type="number" class="text-field__input"
+                            v-model="formDepartment.max_percent" @input="serializePercent(formDepartment)"
+                            placeholder="1.2" />
+                    </form>
+                    <button class="btn" @click="addNewDepartment">Добавить</button>
+                </div>
+            </div>
+        </div>
+        <div v-if="viewEmployeesList" class="modal-add">
+            <div class="modal-content">
+                <div class="modal-head">
+                    <span>Список сотрудников</span>
+                    <a @click="viewEmployeesList = false" class="close-icon" href="#"></a>
+                </div>
+                <div class="modal-body">
+                    <ul v-if="db.employees.length > 0">
+                        <li v-for="emp in db.employees">
+                            <span>{{ emp.surname }} {{ emp.name }}</span>
+                            <select  v-model="emp.did">
+                                <option v-for="dep in db.departments" :key="dep.id" :value="dep.id">{{dep.name}}</option>
+                            </select>
+                            <a href="#" @click="deleteEmployee(emp)" class="icon-delete" title="Удалить сотрудника"></a>
+                        </li>
+                    </ul>
+                    <span v-else><em>Список пуст!</em></span>
+                </div>
+            </div>
+        </div>
+        <div v-if="viewDepartmentList" class="modal-add">
+            <div class="modal-content">
+                <div class="modal-head">
+                    <span>Список отделов</span>
+                    <a @click="closeDepartmentList" class="close-icon" href="#"></a>
+                </div>
+                <div class="modal-body">
+                    <ul v-if="db.departments.length > 0">
+                        <li v-for="dep in db.departments">
+                            <div class="modal-block">
+                                {{ dep.name }}
+                                <label class="lower">
+                                    <span>мин. бонус %</span>
+                                    <input size="5" type="number" v-model="dep.min_percent" @input="serializePercent(dep)">
+                                </label>
+                                <label class="lower">
+                                    <span>мак. бонус %</span>
+                                    <input size="5" type="number" v-model="dep.max_percent" @input="serializePercent(dep)">
+                                </label>
+                            </div>
+                            <div>
+                                <a v-if="editObj" href="#" @click="addDepartmentToGroup(dep)" class="icon-add"
+                                    title="Добавить отдел в р/п"></a>
+                                <a v-if="!editObj" href="#" @click="deleteDepartment(dep)" class="icon-delete"
+                                    title="Удалить отдел"></a>
+                            </div>
+
+                        </li>
+                    </ul>
+                    <span v-else><em>Список пуст!</em></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
+<script src="./assets/vue.min.js"></script>
+<script src="./assets/lodash.js"></script>
+<script src="./assets/app.js"></script>
