@@ -23,8 +23,6 @@
 
 ## Установка и настройка
 
-Подробная инструкция по установке: [SETUP.md](SETUP.md)
-
 ### Быстрый старт
 
 ```bash
@@ -60,34 +58,39 @@ npm run dev
 
 ## Деплой на Timeweb
 
-Подробная инструкция по деплою: [DEPLOY_TIMEWEB.md](DEPLOY_TIMEWEB.md)
+### Быстрый деплой через Git
 
-### Быстрый деплой
-
-1. Соберите проект: `npm run build`
-2. Загрузите файлы на сервер
-3. Настройте `.env` файл на сервере
-4. Выполните на сервере:
+1. **На локальной машине:**
    ```bash
+   ./prepare_production.sh
+   git commit -m "Production build (frontend)"
+   git push origin main
+   ```
+
+2. **На сервере:**
+   ```bash
+   git pull origin main
    composer install --no-dev --optimize-autoloader
-   php artisan key:generate
    php artisan migrate --force
-   php artisan db:seed --force
    php artisan config:cache
    php artisan route:cache
    php artisan view:cache
-   chmod -R 775 storage bootstrap/cache
    ```
 
-Подробнее: [QUICK_DEPLOY.md](QUICK_DEPLOY.md)
+3. **Если весь проект в `public_html/`:**
+   ```bash
+   ./documentation/setup_all_in_public_html.sh
+   ```
+
+Подробная документация по деплою находится в папке `documentation/` (не коммитится в git).
 
 ## Документация
 
-- [SETUP.md](SETUP.md) - Настройка проекта
-- [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md) - Схема базы данных
-- [DEPLOY_TIMEWEB.md](DEPLOY_TIMEWEB.md) - Деплой на Timeweb
-- [DEPLOY_CHECKLIST.md](DEPLOY_CHECKLIST.md) - Чек-лист деплоя
-- [QUICK_DEPLOY.md](QUICK_DEPLOY.md) - Быстрый деплой
+Подробная документация находится в папке `documentation/` (локально, не коммитится в git):
+- Инструкции по установке и настройке
+- Документация по деплою на Timeweb
+- Решения проблем и FAQ
+- Схема базы данных
 
 ## Учетные данные по умолчанию
 
