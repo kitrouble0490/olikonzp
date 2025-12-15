@@ -74,12 +74,32 @@
                 <div class="footer-content">
                     <el-scrollbar>
                         <div class="footer-buttons">
-                            <el-button v-for="page in pagesStore.pages" :key="page.id" :type="currentPage?.id === page.id
-                                    ? 'primary'
-                                    : 'default'
-                                " @click="selectPage(page.id)">
-                                {{ page.title }}
-                            </el-button>
+                            <div v-for="page in pagesStore.pages" :key="page.id" class="page-button-group">
+                                <el-button-group>
+                                    <el-button :type="currentPage?.id === page.id
+                                            ? 'primary'
+                                            : 'default'
+                                        " @click="selectPage(page.id)">
+                                        {{ page.title }}
+                                    </el-button>
+                                    <template v-if="isPageEmpty(page)">
+                                        <el-button
+                                            :icon="Edit"
+                                            :type="currentPage?.id === page.id ? 'primary' : 'default'"
+                                            @click.stop="editPageTitle(page)"
+                                            title="Редактировать название"
+                                            class="action-button"
+                                        />
+                                        <el-button
+                                            :icon="Delete"
+                                            type="danger"
+                                            @click.stop="deletePage(page.id)"
+                                            title="Удалить страницу"
+                                            class="action-button"
+                                        />
+                                    </template>
+                                </el-button-group>
+                            </div>
                         </div>
                     </el-scrollbar>
                 </div>
@@ -99,12 +119,14 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from "vue";
-import { ElMessage } from "element-plus";
+import { ElMessage, ElMessageBox } from "element-plus";
 import {
     Plus,
     Calendar,
     User,
     OfficeBuilding,
+    Delete,
+    Edit,
 } from "@element-plus/icons-vue";
 import { usePagesStore } from "./stores/pages";
 import { useDepartmentsStore } from "./stores/departments";
@@ -167,6 +189,11 @@ const editObj = ref(null);
 
 // Computed
 const currentPage = computed(() => pagesStore.currentPage);
+
+// Проверка, пустая ли страница (нет периодов)
+const isPageEmpty = (page) => {
+    return !page.periods || page.periods.length === 0;
+};
 
 // Methods
 const differenceSumm = (arg1, arg2) => {
@@ -237,6 +264,66 @@ const handleLogout = async () => {
         ElMessage.success("Вы успешно вышли из системы");
     } catch (error) {
         ElMessage.error("Ошибка при выходе из системы");
+    }
+};
+
+// Удаление страницы
+const deletePage = async (pageId) => {
+    try {
+        await ElMessageBox.confirm(
+            "Вы уверены, что хотите удалить эту страницу?",
+            "Подтверждение удаления",
+            {
+                confirmButtonText: "Удалить",
+                cancelButtonText: "Отмена",
+                type: "warning",
+            }
+        );
+
+        await pagesStore.deletePage(pageId);
+        ElMessage.success("Страница удалена");
+
+        // Если удалили текущую страницу, выбираем первую доступную
+        if (pagesStore.pages.length > 0) {
+            await selectPage(pagesStore.pages[0].id);
+        }
+    } catch (error) {
+        if (error !== "cancel") {
+            ElMessage.error("Ошибка при удалении страницы");
+        }
+    }
+};
+
+// Редактирование названия страницы
+const editPageTitle = async (page) => {
+    try {
+        const { value } = await ElMessageBox.prompt(
+            "Введите новое название страницы",
+            "Редактирование страницы",
+            {
+                confirmButtonText: "Сохранить",
+                cancelButtonText: "Отмена",
+                inputValue: page.title,
+                inputValidator: (value) => {
+                    if (!value || value.trim().length === 0) {
+                        return "Название не может быть пустым";
+                    }
+                    return true;
+                },
+            }
+        );
+
+        await pagesStore.updatePage(page.id, { title: value.trim() });
+        ElMessage.success("Название страницы обновлено");
+
+        // Если редактируем текущую страницу, обновляем её
+        if (currentPage.value?.id === page.id) {
+            await selectPage(page.id);
+        }
+    } catch (error) {
+        if (error !== "cancel") {
+            ElMessage.error("Ошибка при обновлении названия страницы");
+        }
     }
 };
 
@@ -354,6 +441,41 @@ onMounted(async () => {
     gap: 10px;
     white-space: nowrap;
     padding: 5px 0;
+}
+
+.page-button-group {
+    display: inline-flex;
+    align-items: center;
+}
+
+.page-button-group :deep(.el-button-group) {
+    display: inline-flex;
+    border-radius: var(--el-border-radius-base);
+    overflow: hidden;
+}
+
+.page-button-group :deep(.el-button-group .el-button) {
+    border-radius: 0;
+    margin-left: 0;
+}
+
+.page-button-group :deep(.el-button-group .el-button:first-child) {
+    border-top-left-radius: var(--el-border-radius-base);
+    border-bottom-left-radius: var(--el-border-radius-base);
+}
+
+.page-button-group :deep(.el-button-group .el-button:last-child) {
+    border-top-right-radius: var(--el-border-radius-base);
+    border-bottom-right-radius: var(--el-border-radius-base);
+}
+
+.page-button-group :deep(.el-button-group .el-button.action-button) {
+    padding: 8px 12px;
+    min-width: auto;
+    height: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 

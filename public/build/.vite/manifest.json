@@ -16,7 +16,7 @@
     "src": "legacy_app/css/icons/xmark.png"
   },
   "resources/css/app.css": {
-    "file": "assets/app-DBL8Syq1.css",
+    "file": "assets/app-AvZCrbdk.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "app",
@@ -25,13 +25,13 @@
     ]
   },
   "resources/js/app.js": {
-    "file": "assets/app-D8W0Dedn.js",
+    "file": "assets/app-BwLu6Qjg.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
     "css": [
-      "assets/app-CiZshZYh.css",
-      "assets/app-DBL8Syq1.css"
+      "assets/app-GxNauyQo.css",
+      "assets/app-AvZCrbdk.css"
     ],
     "assets": [
       "assets/xmark-cdADDkuO.png",
