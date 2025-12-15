@@ -19,11 +19,15 @@
     RewriteRule ^ %1 [L,R=301]
 
     # ВАЖНО: Обслуживание статических файлов ДО index.php
-    # Если файл существует - обслуживаем его напрямую
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteCond %{REQUEST_FILENAME} !-d
+    # Правило 1: Если файл существует физически - обслуживаем его напрямую
+    RewriteCond %{REQUEST_FILENAME} -f
+    RewriteRule ^ - [L]
     
-    # Send Requests To Front Controller...
+    # Правило 2: Если директория существует - обслуживаем её напрямую
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+    
+    # Send Requests To Front Controller (только если файл/директория не существует)...
     RewriteRule ^ index.php [L]
 </IfModule>
 
