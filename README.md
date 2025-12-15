@@ -70,15 +70,17 @@ npm run dev
 2. **На сервере:**
    ```bash
    # Автоматический деплой (рекомендуется)
-   ./deploy_server.sh
+   ./documentation/deploy_on_server.sh
    
    # Или вручную:
-   git pull origin main
+   # ВАЖНО: Удалите локально собранный build перед pull (если был собран на сервере)
+   rm -rf public/build
+   
+   git pull origin main  # или master
    composer install --no-dev --optimize-autoloader
    
-   # Если public/build/ отсутствует, соберите фронтенд:
-   npm install
-   npm run build
+   # Если public/build/ не в git, соберите фронтенд:
+   # npm install && npm run build
    
    php artisan migrate --force
    php artisan config:clear
@@ -89,6 +91,9 @@ npm run dev
    php artisan route:cache
    php artisan view:cache
    ```
+   
+   **⚠️ ВАЖНО:** Если на сервере был собран локально `public/build/` (не из git), 
+   его нужно удалить перед `git pull`, иначе возникнет конфликт с manifest.json
 
 3. **Если весь проект в `public_html/`:**
    ```bash
