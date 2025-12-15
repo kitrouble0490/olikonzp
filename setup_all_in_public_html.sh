@@ -34,15 +34,30 @@ else
     echo "⚠️  Файл .htaccess не найден. Создайте его вручную."
 fi
 
-# 2. Копирование build/
-echo "📋 Копирование build/..."
+# 2. Настройка build/ для Vite
+echo "📋 Настройка build/ для Vite..."
 if [ -d "public/build" ]; then
-    cp -r public/build build
-    echo "✅ build/ скопирован"
+    # Если build/ уже в public/, оставляем как есть
+    echo "✅ build/ уже в public/"
 elif [ -d "build" ]; then
-    echo "✅ build/ уже существует"
+    # Если build/ в корне, создаем public/ и симлинк
+    mkdir -p public
+    if ln -s ../build public/build 2>/dev/null; then
+        echo "✅ Симлинк public/build -> build создан"
+    else
+        # Если симлинк не работает, перемещаем build/
+        mv build public/build
+        echo "✅ build/ перемещен в public/build/"
+    fi
 else
     echo "⚠️  Папка build/ не найдена. Выполните 'npm run build' и загрузите build/"
+fi
+
+# Проверка наличия manifest.json
+if [ -f "public/build/manifest.json" ] || [ -f "build/manifest.json" ]; then
+    echo "✅ manifest.json найден"
+else
+    echo "⚠️  manifest.json не найден! Vite может не работать."
 fi
 
 # 3. Создание правильного index.php
