@@ -1,0 +1,43 @@
+{
+  "legacy_app/css/icons/plus.png": {
+    "file": "assets/plus-uFpSzkzB.png",
+    "src": "legacy_app/css/icons/plus.png"
+  },
+  "legacy_app/css/icons/trash.png": {
+    "file": "assets/trash-hje9OJEb.png",
+    "src": "legacy_app/css/icons/trash.png"
+  },
+  "legacy_app/css/icons/xmark-white.png": {
+    "file": "assets/xmark-white-DyJS8wgQ.png",
+    "src": "legacy_app/css/icons/xmark-white.png"
+  },
+  "legacy_app/css/icons/xmark.png": {
+    "file": "assets/xmark-cdADDkuO.png",
+    "src": "legacy_app/css/icons/xmark.png"
+  },
+  "resources/css/app.css": {
+    "file": "assets/app-DBL8Syq1.css",
+    "src": "resources/css/app.css",
+    "isEntry": true,
+    "name": "app",
+    "names": [
+      "app.css"
+    ]
+  },
+  "resources/js/app.js": {
+    "file": "assets/app-D8W0Dedn.js",
+    "name": "app",
+    "src": "resources/js/app.js",
+    "isEntry": true,
+    "css": [
+      "assets/app-CiZshZYh.css",
+      "assets/app-DBL8Syq1.css"
+    ],
+    "assets": [
+      "assets/xmark-cdADDkuO.png",
+      "assets/xmark-white-DyJS8wgQ.png",
+      "assets/trash-hje9OJEb.png",
+      "assets/plus-uFpSzkzB.png"
+    ]
+  }
+}
